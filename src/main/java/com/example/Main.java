@@ -2,11 +2,10 @@ package com.example;
 
 import com.example.api.ElpriserAPI;
 
+import java.text.NumberFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -18,6 +17,7 @@ public class Main {
         String dateOf = null;
         String chargeOf = null;
         boolean isHelped = false;
+        boolean isSorted = false;
 
         List<String> validZones = new ArrayList<>();
         validZones.add("SE1");
@@ -25,30 +25,33 @@ public class Main {
         validZones.add("SE3");
         validZones.add("SE4");
 
-        //List<ElpriserAPI.Elpris> prisLista = getPriser(zoneOf, dateToday);
-
 
 //Loopar igenom args och letar efter input från terminalen, case stryr vad som händer om ex --zone skrivs in
         //if ger nya värden till zoneOf, dateOf, chargeOf och isHelped och skickar tillbaka till main-metoden
+        if (args.length == 0) {
+            ifInvalidChoice();
+            return;
+        }
+
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--zone" -> {
                     if (i + 1 < args.length) {
                         zoneOf = args[++i];
-                    }else {
-                            ifInvalidChoice();
-                            return;
-                        }
+                    } else {
+                        ifInvalidChoice();
+                        return;
+                    }
 
                 }
                 case "--date" -> {
                     if (i + 1 < args.length) {
                         dateOf = args[++i];
 
-                        } else {
-                            ifInvalidChoice();
-                            return;
-                        }
+                    } else {
+                        ifInvalidChoice();
+                        return;
+                    }
                 }
                 case "--charge" -> {
                     if (i + 1 < args.length) {
@@ -61,6 +64,8 @@ public class Main {
                         }
                     }
                 }
+                case "--sorted" -> isSorted = true;
+
                 case "--help" -> {
                     //om args inehåller --hel anropas metoden sendHelp(); och sedan sätts isHelped till true.
                     helpMe();
@@ -68,10 +73,7 @@ public class Main {
                 }
             }
             if (isHelped) return;
-            if (args.length == 0) {
-                ifInvalidChoice();
-                return;
-            }
+
         }
         LocalDate dagensDatum;
         if (dateOf != null)
@@ -87,17 +89,37 @@ public class Main {
         }
         ElpriserAPI.Prisklass zon;
 
-        if (zoneOf == null || !validZones.contains(zoneOf)) {
+        if (zoneOf == null || !validZones.contains(zoneOf.toUpperCase())) {
             System.out.println("Ogiltig zon: " + zoneOf);
             ifInvalidChoice();
             return;
         }
-        zon = ElpriserAPI.Prisklass.valueOf(zoneOf);
+        zon = ElpriserAPI.Prisklass.valueOf(zoneOf.toUpperCase());
+
+        List<ElpriserAPI.Elpris> prisLista = elpriserApi.getPriser(dagensDatum, zon);
+        NumberFormat numberFormat = NumberFormat.getNumberInstance(new Locale("sv", "SE"));
+        numberFormat.setMinimumFractionDigits(2);
+        numberFormat.setMaximumFractionDigits(2);
+
+        if (prisLista == null || prisLista.isEmpty()) {
+            System.out.println("Inga priser hittades för zon: " + zon + "den " + dagensDatum);
+            return;
+        }
+
+        if (isSorted) {
+            prisLista.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh)); //Ta varje Elpris-objekt och anropa sekPerKwh
+        }
+
+        for (ElpriserAPI.Elpris elpriser : prisLista) {
+
+            String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
+            System.out.println("Tid: " + elpriser.timeStart().toLocalTime() + " Pris: " + formateratPris + "öre");
+        }
 
 
     }
 
-
+    //plusDays(1) - metod för att visa för nästa dag
 
 
     // metod för att gå igenom och letar efter valt argument i innehållet i args[]
