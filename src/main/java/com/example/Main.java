@@ -107,13 +107,13 @@ public class Main {
         }
 
         if (isSorted) {
-            prisLista.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh)); //Ta varje Elpris-objekt och anropa sekPerKwh
+            prisLista.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh)); //Ta varje Elpris-objekt och anropa sekPerKwh | reversed blir fallande
         }
 
         for (ElpriserAPI.Elpris elpriser : prisLista) {
 
             String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
-            System.out.println("Tid: " + elpriser.timeStart().toLocalTime() + " Pris: " + formateratPris + "öre");
+            System.out.println("Tid: " + elpriser.timeStart().toLocalTime() + " Pris: " + formateratPris + " öre/KWh");
         }
 
 
