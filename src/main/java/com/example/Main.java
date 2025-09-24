@@ -2,7 +2,10 @@ package com.example;
 
 import com.example.api.ElpriserAPI;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
@@ -11,27 +14,95 @@ public class Main {
         System.out.println("Välkommen till Elpris-kollen!");
         ElpriserAPI elpriserApi = new ElpriserAPI();
 
+        String zoneOf = null;
+        String dateOf = null;
+        String chargeOf = null;
+        boolean isHelped = false;
 
-        //en if - sats för att tolka olika argument, key = variabeln för argument som samlats i args[]
-        if(containsArg(args, "--help")) {
-            helpMe();
-            //programmet avslutas efter visad text i output
+        List<String> validZones = new ArrayList<>();
+        validZones.add("SE1");
+        validZones.add("SE2");
+        validZones.add("SE3");
+        validZones.add("SE4");
+
+        //List<ElpriserAPI.Elpris> prisLista = getPriser(zoneOf, dateToday);
+
+
+//Loopar igenom args och letar efter input från terminalen, case stryr vad som händer om ex --zone skrivs in
+        //if ger nya värden till zoneOf, dateOf, chargeOf och isHelped och skickar tillbaka till main-metoden
+        for (int i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "--zone" -> {
+                    if (i + 1 < args.length) {
+                        zoneOf = args[++i];
+                    }else {
+                            ifInvalidChoice();
+                            return;
+                        }
+
+                }
+                case "--date" -> {
+                    if (i + 1 < args.length) {
+                        dateOf = args[++i];
+
+                        } else {
+                            ifInvalidChoice();
+                            return;
+                        }
+                }
+                case "--charge" -> {
+                    if (i + 1 < args.length) {
+                        chargeOf = args[++i];
+                        if (chargeOf != null) {
+                            //if charge anropas visa laddningsfönster
+                        } else {
+                            ifInvalidChoice();
+                            return;
+                        }
+                    }
+                }
+                case "--help" -> {
+                    //om args inehåller --hel anropas metoden sendHelp(); och sedan sätts isHelped till true.
+                    helpMe();
+                    isHelped = true;
+                }
+            }
+            if (isHelped) return;
+            if (args.length == 0) {
+                ifInvalidChoice();
+                return;
+            }
         }
-        if(containsArg(args, "--date")) {
-            String date = getArgValue(args, "--date");
-            LocalDate idag = LocalDate.now();
-            System.out.println("Datum: " + idag);
+        LocalDate dagensDatum;
+        if (dateOf != null)
+            try {
+                dagensDatum = LocalDate.parse(dateOf);
+            } catch (DateTimeException e) {
+                System.out.println("Ogiltigt datum: " + dateOf);
+                ifInvalidChoice();
+                return;
+            }
+        else {
+            dagensDatum = LocalDate.now();
         }
+        ElpriserAPI.Prisklass zon;
 
-
+        if (zoneOf == null || !validZones.contains(zoneOf)) {
+            System.out.println("Ogiltig zon: " + zoneOf);
+            ifInvalidChoice();
+            return;
         }
+        zon = ElpriserAPI.Prisklass.valueOf(zoneOf);
+
+
+    }
 
 
 
 
- // metod för att gå igenom och letar efter valt argument i innehållet i args[]
+    // metod för att gå igenom och letar efter valt argument i innehållet i args[]
     //key är en variabel för argumentet i kommandotolken
-    //behövs för om man har arument utan värde, Kollar om ett argument finns
+    //behövs för om man har argument utan värde, Kollar om ett argument finns
 
     /*args[]: alla argument från kommandoraden
 - key: det argument du letar efter, t.ex. "--zone"*/
@@ -55,13 +126,28 @@ public class Main {
      return null;
  }
 
+ //Metod för att hämta elpriser
+   public static double getElpriser(List<ElpriserAPI.Elpris> dagensPriser) {
+        double summa = 0.0;
+       for (ElpriserAPI.Elpris elpriser : dagensPriser) {
+           summa += elpriser.sekPerKWh();
+       }
+       return summa;
+   }
+//Metod som anropas om det inmatats ett felaktigt argument
+ private static void ifInvalidChoice() {
+     boolean isHelped;
+     System.out.println("Ogiltigt val, du skickas nu till hjälpmeny");
+     helpMe();
+     isHelped = true;
+ }
 // metod för --help att skickas till if-sats
 public static void helpMe() {
     System.out.println("""
     Hjälpcenter
     ______________________
 
-    Användning:
+    Usage / Användning:
       java -cp target/classes com.example.Main [alternativ]
 
     Alternativ:
