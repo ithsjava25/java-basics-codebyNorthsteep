@@ -84,6 +84,7 @@ public class Main {
         else {
             dagensDatum = LocalDate.now();
         }
+
         ElpriserAPI.Prisklass zon;
 
         if (zoneOf == null || !validZones.contains(zoneOf.toUpperCase())) {
@@ -129,10 +130,9 @@ public class Main {
     }
     //Metod som anropas om det inmatats ett felaktigt argument
     private static void ifInvalidChoice() {
-        boolean isHelped;
         System.out.println("Ogiltigt val, du skickas nu till hjälpmeny");
         helpMe();
-        isHelped = true;
+
     }
     // metod för --help att skickas till if-sats
     public static void helpMe() {
