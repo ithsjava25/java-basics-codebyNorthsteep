@@ -35,17 +35,14 @@ public class Main {
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-                case "--zone" -> {
-                    if (i + 1 < args.length) {
+                case "--zone" -> { if (i + 1 < args.length) {
                         zoneOf = args[++i];
                     } else {
                         ifInvalidChoice();
                         return;
                     }
-
                 }
-                case "--date" -> {
-                    if (i + 1 < args.length) {
+                case "--date" -> { if (i + 1 < args.length) {
                         dateOf = args[++i];
 
                     } else {
@@ -53,8 +50,7 @@ public class Main {
                         return;
                     }
                 }
-                case "--charge" -> {
-                    if (i + 1 < args.length) {
+                case "--charge" -> { if (i + 1 < args.length) {
                         chargeOf = args[++i];
                         if (chargeOf != null) {
                             //if charge anropas visa laddningsfönster
@@ -67,7 +63,7 @@ public class Main {
                 case "--sorted" -> isSorted = true;
 
                 case "--help" -> {
-                    //om args inehåller --hel anropas metoden sendHelp(); och sedan sätts isHelped till true.
+                    //om args inehåller --help anropas metoden sendHelp(); och sedan sätts isHelped till true.
                     helpMe();
                     isHelped = true;
                 }
@@ -76,6 +72,7 @@ public class Main {
 
         }
         LocalDate dagensDatum;
+
         if (dateOf != null)
             try {
                 dagensDatum = LocalDate.parse(dateOf);
@@ -105,67 +102,38 @@ public class Main {
             System.out.println("Inga priser hittades för zon: " + zon + "den " + dagensDatum);
             return;
         }
-
         if (isSorted) {
-            prisLista.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh)); //Ta varje Elpris-objekt och anropa sekPerKwh | reversed blir fallande
+            prisLista.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed()); //Ta varje Elpris-objekt och anropa sekPerKwh | reversed blir fallande
         }
 
+        //LocalDate tomorrow = dagensDatum.plusDays(1);
         for (ElpriserAPI.Elpris elpriser : prisLista) {
 
             String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
-            System.out.println("Tid: " + elpriser.timeStart().toLocalTime() + " Pris: " + formateratPris + " öre/KWh");
+            System.out.println("Tid: " + elpriser.timeStart().toLocalTime() +"-"+ elpriser.timeEnd().toLocalTime() + " Pris: " + formateratPris + " öre/KWh");
+
         }
+        /*if (tomorrow != null) {
+            System.out.println("Morgon dagens elpriser: " + tomorrow);
+        }*/
 
 
+        double summa = getElpriser(prisLista);
+        double medelPrisOfDay = summa/ prisLista.size();
+        System.out.println("Medelpriset för dagens elpriser är: " +  numberFormat.format(medelPrisOfDay*100) + " öre/KWh");
+
+//SLiding window int min =  int index =  double sum =
     }
-
-    //plusDays(1) - metod för att visa för nästa dag
-
-
-    // metod för att gå igenom och letar efter valt argument i innehållet i args[]
-    //key är en variabel för argumentet i kommandotolken
-    //behövs för om man har argument utan värde, Kollar om ett argument finns
-
-    /*args[]: alla argument från kommandoraden
-- key: det argument du letar efter, t.ex. "--zone"*/
-
-
-    public static boolean containsArg(String[] args, String key) {
-    for(String arg : args) {
-        if (arg.equalsIgnoreCase(key)) {
-            return true;
-        }
+    //Metod som anropas om det inmatats ett felaktigt argument
+    private static void ifInvalidChoice() {
+        boolean isHelped;
+        System.out.println("Ogiltigt val, du skickas nu till hjälpmeny");
+        helpMe();
+        isHelped = true;
     }
-     return false;
- }
-
- public static String getArgValue(String[] args, String key) {
-        for (int i = 0; i < args.length -1 ; i++) {
-            if (args[i].equalsIgnoreCase(key)) {
-                return args[i+1];
-            }
-        }
-     return null;
- }
-
- //Metod för att hämta elpriser
-   public static double getElpriser(List<ElpriserAPI.Elpris> dagensPriser) {
-        double summa = 0.0;
-       for (ElpriserAPI.Elpris elpriser : dagensPriser) {
-           summa += elpriser.sekPerKWh();
-       }
-       return summa;
-   }
-//Metod som anropas om det inmatats ett felaktigt argument
- private static void ifInvalidChoice() {
-     boolean isHelped;
-     System.out.println("Ogiltigt val, du skickas nu till hjälpmeny");
-     helpMe();
-     isHelped = true;
- }
-// metod för --help att skickas till if-sats
-public static void helpMe() {
-    System.out.println("""
+    // metod för --help att skickas till if-sats
+    public static void helpMe() {
+        System.out.println("""
     Hjälpcenter
     ______________________
 
@@ -182,7 +150,28 @@ public static void helpMe() {
     Exempel:
       java Main --zone SE3 --charging 4h
     """);
-}
+    }
+    //plusDays(1) - metod för att visa för nästa dag
+
+
+    // metod för att gå igenom och letar efter valt argument i innehållet i args[]
+    //key är en variabel för argumentet i kommandotolken
+    //behövs för om man har argument utan värde, Kollar om ett argument finns
+
+    /*args[]: alla argument från kommandoraden
+- key: det argument du letar efter, t.ex. "--zone"*/
+
+
+
+ //Metod för att hämta elpriser
+   public static double getElpriser(List<ElpriserAPI.Elpris> dagensPriser) {
+        double summa = 0.0;
+       for (ElpriserAPI.Elpris elpriser : dagensPriser) {
+           summa += elpriser.sekPerKWh();
+       }
+       return summa;
+   }
+
 
 }
 
