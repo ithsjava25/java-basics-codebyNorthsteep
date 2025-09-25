@@ -118,7 +118,10 @@ public class Main {
         }*/
 
 
-        double summa = getElpriser(prisLista);
+        double summa = 0.0;
+        for (ElpriserAPI.Elpris elpriser : prisLista) {
+            summa  += elpriser.sekPerKWh();
+        }
         double medelPrisOfDay = summa/ prisLista.size();
         System.out.println("Medelpriset för dagens elpriser är: " +  numberFormat.format(medelPrisOfDay*100) + " öre/KWh");
 
@@ -154,23 +157,11 @@ public class Main {
     //plusDays(1) - metod för att visa för nästa dag
 
 
-    // metod för att gå igenom och letar efter valt argument i innehållet i args[]
-    //key är en variabel för argumentet i kommandotolken
-    //behövs för om man har argument utan värde, Kollar om ett argument finns
-
-    /*args[]: alla argument från kommandoraden
-- key: det argument du letar efter, t.ex. "--zone"*/
 
 
+ //Metod för att göra att hämta elpriser?
 
- //Metod för att hämta elpriser
-   public static double getElpriser(List<ElpriserAPI.Elpris> dagensPriser) {
-        double summa = 0.0;
-       for (ElpriserAPI.Elpris elpriser : dagensPriser) {
-           summa += elpriser.sekPerKWh();
-       }
-       return summa;
-   }
+
 
 
 }
