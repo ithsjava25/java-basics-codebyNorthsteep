@@ -5,14 +5,23 @@ import com.example.api.ElpriserAPI;
 import java.text.NumberFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+
+//Att göra idag
+//todo: Skapa en metod för att snygga till min switch
+//todo: skapa en metod som beräknar min,max & medelpris
+//todo: hämta morgondagens priser och skriv ut dem
+//todo: skapa en metod för sliding window till -charging 2h,4h,8h
+
 
 public class Main {
     public static void main(String[] args) {
 
-        System.out.println("Välkommen till Elpris-kollen!");
         ElpriserAPI elpriserApi = new ElpriserAPI();
-
+        System.out.println("Välkommen till Elpris-kollen!");
         String zoneOf = null;
         String dateOf = null;
         String chargeOf = null;
@@ -28,25 +37,21 @@ public class Main {
 
 //Loopar igenom args och letar efter input från terminalen, case stryr vad som händer om ex --zone skrivs in
         //if ger nya värden till zoneOf, dateOf, chargeOf och isHelped och skickar tillbaka till main-metoden
-        if (args.length == 0) {
-            ifInvalidChoice();
-            return;
+        if (args.length == 0) {ifInvalidChoice();
         }
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--zone" -> { if (i + 1 < args.length) {
                         zoneOf = args[++i];
-                    } else {
-                        ifInvalidChoice();
+                    } else { ifInvalidChoice();
                         return;
                     }
                 }
                 case "--date" -> { if (i + 1 < args.length) {
                         dateOf = args[++i];
 
-                    } else {
-                        ifInvalidChoice();
+                    } else { ifInvalidChoice();
                         return;
                     }
                 }
@@ -54,24 +59,21 @@ public class Main {
                         chargeOf = args[++i];
                         if (chargeOf != null) {
                             //if charge anropas visa laddningsfönster
-                        } else {
-                            ifInvalidChoice();
+                        } else { ifInvalidChoice();
                             return;
                         }
                     }
                 }
                 case "--sorted" -> isSorted = true;
 
-                case "--help" -> {
-                    //om args inehåller --help anropas metoden sendHelp(); och sedan sätts isHelped till true.
-                    helpMe();
-                    isHelped = true;
+                case "--help" -> { helpMe(); isHelped = true;
                 }
             }
             if (isHelped) return;
 
         }
         LocalDate dagensDatum;
+
 
         if (dateOf != null)
             try {
@@ -84,7 +86,7 @@ public class Main {
         else {
             dagensDatum = LocalDate.now();
         }
-
+        LocalDate tomorrow = dagensDatum.plusDays(1);
         ElpriserAPI.Prisklass zon;
 
         if (zoneOf == null || !validZones.contains(zoneOf.toUpperCase())) {
@@ -94,40 +96,84 @@ public class Main {
         }
         zon = ElpriserAPI.Prisklass.valueOf(zoneOf.toUpperCase());
 
-        List<ElpriserAPI.Elpris> prisLista = elpriserApi.getPriser(dagensDatum, zon);
+        List<ElpriserAPI.Elpris> priserIdag = elpriserApi.getPriser(dagensDatum, zon);
+        List<ElpriserAPI.Elpris> priserImorgon = elpriserApi.getPriser(tomorrow, zon);
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH");
         NumberFormat numberFormat = NumberFormat.getNumberInstance(new Locale("sv", "SE"));
         numberFormat.setMinimumFractionDigits(2);
         numberFormat.setMaximumFractionDigits(2);
 
-        if (prisLista == null || prisLista.isEmpty()) {
+        if (priserIdag == null || priserIdag.isEmpty()) { //Kolla om jag kan jämföra morgondagens i denna också
             System.out.println("Inga priser hittades för zon: " + zon + "den " + dagensDatum);
             return;
         }
         if (isSorted) {
-            prisLista.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed()); //Ta varje Elpris-objekt och anropa sekPerKwh | reversed blir fallande
+            priserIdag.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
+            priserImorgon.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
+            //Ta varje Elpris-objekt och anropa sekPerKwh | reversed blir fallande
         }
 
-        //LocalDate tomorrow = dagensDatum.plusDays(1);
-        for (ElpriserAPI.Elpris elpriser : prisLista) {
+        for (ElpriserAPI.Elpris elpriser : priserIdag) { //gör till metod
 
             String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
-            System.out.println("Tid: " + elpriser.timeStart().toLocalTime() +"-"+ elpriser.timeEnd().toLocalTime() + " Pris: " + formateratPris + " öre/KWh");
-
+            System.out.println("Tid: " + elpriser.timeStart().format(timeFormatter) +"-"+ elpriser.timeEnd().format(timeFormatter) + " Pris: " + formateratPris + " öre/KWh");
         }
-        /*if (tomorrow != null) {
-            System.out.println("Morgon dagens elpriser: " + tomorrow);
-        }*/
+
+         for (ElpriserAPI.Elpris elpriser : priserImorgon) { //gör till metod, sätta start tid och slut tid till variabler?
+             if (priserImorgon.isEmpty()) {
+                 System.out.println("Ingen prisdata är tillgänglig för morgondagen");
+             }
+            else { String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
+             System.out.println("Tid: " + elpriser.timeStart().format(timeFormatter) + "-" + elpriser.timeEnd().format(timeFormatter) + " Pris: " + formateratPris + " öre/KWh");
+         }
+        }
+        medelPris(priserIdag, numberFormat);
+        priceMinMax(priserIdag, numberFormat, timeFormatter);
 
 
+//SLiding window int min =  int index =  double sum =
+    }
+
+    private static void medelPris(List<ElpriserAPI.Elpris> prisLista, NumberFormat numberFormat) {
         double summa = 0.0;
         for (ElpriserAPI.Elpris elpriser : prisLista) {
             summa  += elpriser.sekPerKWh();
         }
         double medelPrisOfDay = summa/ prisLista.size();
-        System.out.println("Medelpriset för dagens elpriser är: " +  numberFormat.format(medelPrisOfDay*100) + " öre/KWh");
-
-//SLiding window int min =  int index =  double sum =
+        System.out.println("Medelpriser för dagen är: " +  numberFormat.format(medelPrisOfDay*100) + " öre/KWh");
     }
+
+    public static void priceMinMax (List<ElpriserAPI.Elpris> priser, NumberFormat numberFormat, DateTimeFormatter timeFormatter) {
+        double minPris = Double.MAX_VALUE;
+        double maxPris = Double.MIN_VALUE;
+        String minTid = null;
+        String minTidSlut = null;
+        String maxTid = null;
+        String maxTidSlut = null;
+        if (priser.isEmpty()) {
+            System.out.println("Ingen prisdata finns att visa");
+        }
+
+        for (ElpriserAPI.Elpris elpriser : priser) {
+            double worthOf = elpriser.sekPerKWh();
+
+            if (minPris > worthOf ) {
+                minPris = worthOf;
+                minTid = elpriser.timeStart().format(timeFormatter);
+                minTidSlut = elpriser.timeEnd().format(timeFormatter);
+            }
+            if (maxPris < worthOf) {
+                maxPris = worthOf;
+                maxTid = elpriser.timeStart().format(timeFormatter);
+                maxTidSlut = elpriser.timeEnd().format(timeFormatter);
+            }
+        }
+        System.out.printf("Lägsta pris för dagen: %s öre/KWh Kl: %s - %s \n", numberFormat.format(minPris*100), minTid, minTidSlut);
+        System.out.printf("Högsta pris för dagen: %s öre/KWh Kl: %s - %s \n", numberFormat.format(maxPris*100), maxTid, maxTidSlut);
+
+    }
+
+
     //Metod som anropas om det inmatats ett felaktigt argument
     private static void ifInvalidChoice() {
         System.out.println("Ogiltigt val, du skickas nu till hjälpmeny");

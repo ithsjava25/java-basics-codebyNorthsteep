@@ -170,13 +170,13 @@ class MainTest {
 
         // Expected sorted output (ascending by price)
         List<String> expectedOrder = List.of(
-                "Tid: 20:00-21:00 Pris: 30,00 öre/KWh",
-                "Tid: 22:00-23:00 Pris: 20,00 öre/KWh",
-                "Tid: 01:00-02:00 Pris: 15,00 öre/KWh",
-                "Tid: 02:00-03:00 Pris: 15,00 öre/KWh",
-                "Tid: 21:00-22:00 Pris: 10,00 öre/KWh",
-                "Tid: 23:00-00:00 Pris: 10,00 öre/KWh",
-                "Tid: 00:00-01:00 Pris: 10,00 öre/KWh"
+                "Tid: 20-21 Pris: 30,00 öre/KWh",
+                "Tid: 22-23 Pris: 20,00 öre/KWh",
+                "Tid: 01-02 Pris: 15,00 öre/KWh",
+                "Tid: 02-03 Pris: 15,00 öre/KWh",
+                "Tid: 21-22 Pris: 10,00 öre/KWh",
+                "Tid: 23-00 Pris: 10,00 öre/KWh",
+                "Tid: 00-01 Pris: 10,00 öre/KWh"
         );
 
         // Extract actual lines that match the pattern
