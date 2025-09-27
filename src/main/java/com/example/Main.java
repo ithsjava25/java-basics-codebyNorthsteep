@@ -103,35 +103,40 @@ public class Main {
         numberFormat.setMinimumFractionDigits(2);
         numberFormat.setMaximumFractionDigits(2);
 
-        if (priserIdag == null || priserIdag.isEmpty()) { //Kolla om jag kan jämföra morgondagens i denna också
-            System.out.println("Inga priser hittades för zon: " + zon + "den " + dagensDatum);
-            return;
-        }
-        if (isSorted) {
-            priserIdag.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
-            priserImorgon.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
-            //Ta varje Elpris-objekt och anropa sekPerKwh | reversed blir fallande
-        }
 
-        for (ElpriserAPI.Elpris elpriser : priserIdag) { //gör till metod
-
-            String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
-            System.out.println("Tid: " + elpriser.timeStart().format(timeFormatter) +"-"+ elpriser.timeEnd().format(timeFormatter) + " Pris: " + formateratPris + " öre/KWh");
-        }
-
-         for (ElpriserAPI.Elpris elpriser : priserImorgon) { //gör till metod, sätta start tid och slut tid till variabler?
-             if (priserImorgon.isEmpty()) {
-                 System.out.println("Ingen prisdata är tillgänglig för morgondagen");
-             }
-            else { String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
-             System.out.println("Tid: " + elpriser.timeStart().format(timeFormatter) + "-" + elpriser.timeEnd().format(timeFormatter) + " Pris: " + formateratPris + " öre/KWh");
-         }
-        }
+        skrivUtPriser(priserIdag,timeFormatter, numberFormat, "Dagenspriser: ", isSorted);
+        skrivUtPriser(priserImorgon,timeFormatter, numberFormat, "Morgondagens priser: ", isSorted);
         medelPris(priserIdag, numberFormat);
         priceMinMax(priserIdag, numberFormat, timeFormatter);
 
 
 //SLiding window int min =  int index =  double sum =
+    }
+
+    public static void chargingWindow (List<ElpriserAPI.Elpris> elpriserLadda, int timmar, DateTimeFormatter timeFormatter, NumberFormat numberFormat) {
+        //todo: 2,4,8 h, testa i sub-arrays(Sliding windows)
+        int min;
+        int max;
+        int index;
+    }
+
+    public static void skrivUtPriser (List<ElpriserAPI.Elpris> elprisList, DateTimeFormatter timeFormatter, NumberFormat numberFormat,String dag, boolean isSorted) {
+
+
+        if (elprisList == null || elprisList.isEmpty()) {
+            System.out.println("Ingen data för " + dag + " är tillgänglig");
+            return;
+        }
+        if (isSorted) {
+            elprisList.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed());
+
+        }
+        System.out.println(dag);
+        for (ElpriserAPI.Elpris elpriser : elprisList) {
+            String formateratPris = numberFormat.format(elpriser.sekPerKWh() * 100);
+            System.out.println("Tid: " + elpriser.timeStart().format(timeFormatter) +"-"+ elpriser.timeEnd().format(timeFormatter) + " Pris: " + formateratPris + " öre/KWh");
+        }
+
     }
 
     private static void medelPris(List<ElpriserAPI.Elpris> prisLista, NumberFormat numberFormat) {
@@ -152,6 +157,7 @@ public class Main {
         String maxTidSlut = null;
         if (priser.isEmpty()) {
             System.out.println("Ingen prisdata finns att visa");
+            return;
         }
 
         for (ElpriserAPI.Elpris elpriser : priser) {
@@ -201,14 +207,6 @@ public class Main {
     """);
     }
     //plusDays(1) - metod för att visa för nästa dag
-
-
-
-
- //Metod för att göra att hämta elpriser?
-
-
-
 
 }
 
