@@ -11,7 +11,7 @@ import java.util.*;
 
 //Att göra idag
 //todo: Skapa en metod för att snygga till min switch
-//todo: skapa en metod som beräknar min,max & medelpris
+
 //todo: hämta morgondagens priser och skriv ut dem
 //todo: skapa en metod för sliding window till -charging 2h,4h,8h
 
