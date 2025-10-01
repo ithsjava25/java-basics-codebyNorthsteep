@@ -174,9 +174,9 @@ public class Main {
             String startTid = start.timeStart().format(minuteFormatter);
             String slutTid = slut.timeEnd().format(minuteFormatter);
             double snittPris = (minSumma/timmar) * 100;
-            String formateratPris = numberFormat.format(snittPris);
 
-            System.out.printf("Billigaste laddningsfönster för %dh är kl %s-%s\nMedelpris för fönster: %s öre\n Påbörja laddning %s", timmar, startTid, slutTid, formateratPris, startTid);
+
+            System.out.printf("Billigaste laddningsfönster för %dh är kl %s-%s\nMedelpris för fönster: %.2f öre\n Påbörja laddning %s", timmar, startTid, slutTid, snittPris, startTid);
         }
     }
     //Processar prislistan som får 96 priser
@@ -195,9 +195,9 @@ public class Main {
 
                 String timDel = String.format("%02d-%02d", timme, timme2);
                 double medelprisToOre = medelPris * 100;
-                String formateratMedelPris = numberFormat.format(medelprisToOre);
 
-                System.out.printf("%s Medelpris: %s öre\n", timDel, formateratMedelPris);
+
+                System.out.printf("%s Medelpris: %.2f öre\n", timDel, medelprisToOre);
             }
             }
         }
@@ -226,8 +226,8 @@ public class Main {
         for (ElpriserAPI.Elpris elpriser : prisLista) {
             summa  += elpriser.sekPerKWh();
         }
-        double medelPrisOfDay = summa/ prisLista.size();
-        System.out.printf("Medelpris: %s öre \n",  numberFormat.format(medelPrisOfDay*100));
+        double medelPrisOfDay = summa/ prisLista.size() *100;
+        System.out.printf("Medelpris: %.2f öre \n",  medelPrisOfDay);
     }
 
     public static void priceMinMax (List<ElpriserAPI.Elpris> prisLista) {
@@ -244,7 +244,7 @@ public class Main {
         }
 
         for (ElpriserAPI.Elpris elpriser : prisLista) {
-            double worthOf = elpriser.sekPerKWh();
+            double worthOf = elpriser.sekPerKWh() *100;
 
             if (minPris > worthOf ) {
                 minPris = worthOf;
@@ -257,8 +257,8 @@ public class Main {
                 maxTidSlut = elpriser.timeEnd().format(timeFormatter);
             }
         }
-        System.out.printf("Lägsta pris för dagen: %s öre/KWh Kl: %s - %s \n", numberFormat.format(minPris*100), minTid, minTidSlut);
-        System.out.printf("Högsta pris för dagen: %s öre/KWh Kl: %s - %s \n", numberFormat.format(maxPris*100), maxTid, maxTidSlut);
+        System.out.printf("Lägsta pris för dagen: %.2f öre/KWh Kl: %s - %s \n", minPris, minTid, minTidSlut);
+        System.out.printf("Högsta pris för dagen: %.2f öre/KWh Kl: %s - %s \n", maxPris, maxTid, maxTidSlut);
 
     }
 
