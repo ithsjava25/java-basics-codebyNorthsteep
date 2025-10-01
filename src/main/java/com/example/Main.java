@@ -123,7 +123,6 @@ public class Main {
             } catch (NumberFormatException e) {
                 helpMe(); return;
             }
-
         }
 
         if (timmar > 0) {
@@ -203,19 +202,7 @@ public class Main {
 
         return sammansattaPriser;
     }
-
-    public static void skrivUtSorteradIdag(List<ElpriserAPI.Elpris> elpriser) {
-        for (ElpriserAPI.Elpris elpris : elpriser){
-
-            String startTid = elpris.timeStart().format(timeFormatter);
-            String slutTid = elpris.timeEnd().format(timeFormatter);
-            String pris = numberFormat.format(elpris.sekPerKWh()*100);
-
-            System.out.printf("%s-%s %s öre\n", startTid, slutTid, pris);
-
-        }
-    }
-    public static void skrivUtSorteradImorgon(List<ElpriserAPI.Elpris> elpriser) {
+    public static void skrivUtSorterad(List<ElpriserAPI.Elpris> elpriser) {
         for (ElpriserAPI.Elpris elpris : elpriser){
 
             String startTid = elpris.timeStart().format(timeFormatter);
@@ -318,7 +305,6 @@ public class Main {
     }
 
 }
-
 
 // java -cp target/classes com.example.Main --zone SE2 --date 2025-09-04 --sorted
 
