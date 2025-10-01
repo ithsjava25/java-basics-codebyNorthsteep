@@ -84,7 +84,7 @@ public class Main {
         zon = ElpriserAPI.Prisklass.valueOf(zoneOf.toUpperCase());
         List<ElpriserAPI.Elpris> priserIdag = elpriserApi.getPriser(dagensDatum, zon);
         if(priserIdag.isEmpty()) {
-            System.out.println("Inga priser hittade för imorgon");
+            System.out.println("Inga priser hittade för idag");
             return;
         } else {
             System.out.println("Dagens priser:");
@@ -125,11 +125,12 @@ public class Main {
         if (isSorted) {
             List<ElpriserAPI.Elpris> sorteradePriser = isSortedCombined(priserIdag, priserImorgon);
             printPriser(sorteradePriser);
-            return;
         }
+
+
         printPriser(kombineradeListor);
-        priceMinMax(priserIdag);
-        medelPris(priserIdag);
+        priceMinMax(kombineradeListor);
+        medelPris(kombineradeListor);
         calculateHourlyAverages(priserIdag);
 
     }
@@ -180,23 +181,24 @@ public class Main {
     }
     //Processar prislistan som får 96 priser
     public static void calculateHourlyAverages (List<ElpriserAPI.Elpris> elpriser96) {
-
+            if (elpriser96.size() > 48) {
         //i är 0; så länge i är mindre än storleken på listan; öka i med 4
             for (int i = 0; i < elpriser96.size(); i += 4) {
                 //I varje loop, stoppa de fyra värdena i en sublist
                 List<ElpriserAPI.Elpris> listaPerTimme = elpriser96.subList(i, i + 4);
 
                 double sum = listaPerTimme.stream().mapToDouble(ElpriserAPI.Elpris::sekPerKWh).sum();
-                double medelPris = sum/4.0;
+                double medelPris = sum / 4.0;
 
-                int timme = i/4;
-                int timme2 = timme +1;
+                int timme = i / 4;
+                int timme2 = timme + 1;
 
                 String timDel = String.format("%02d-%02d", timme, timme2);
                 double medelprisToOre = medelPris * 100;
                 String formateratMedelPris = numberFormat.format(medelprisToOre);
 
                 System.out.printf("%s Medelpris: %s öre\n", timDel, formateratMedelPris);
+            }
             }
         }
 
