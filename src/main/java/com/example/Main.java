@@ -125,10 +125,12 @@ public class Main {
         if (isSorted) {
             List<ElpriserAPI.Elpris> sorteradePriser = isSortedCombined(priserIdag, priserImorgon);
             printPriser(sorteradePriser);
+        } else {
+            printPriser(kombineradeListor);
         }
 
 
-        printPriser(kombineradeListor);
+
         priceMinMax(kombineradeListor);
         medelPris(kombineradeListor);
         calculateHourlyAverages(priserIdag);
