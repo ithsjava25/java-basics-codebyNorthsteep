@@ -7,6 +7,7 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 //Att göra idag
@@ -137,6 +138,7 @@ public class Main {
         skrivUtPriser(priserIdag, priserImorgon);
         priceMinMax(priserIdag);
         medelPris(priserIdag);
+        listWith96Prices(priserIdag);
 
 
     }
@@ -188,6 +190,36 @@ public class Main {
             System.out.printf("Billigaste laddningsfönster för %dh är kl %s-%s\nMedelpris för fönster: %s öre\n Påbörja laddning %s", timmar, startTid, slutTid, formateratPris, startTid);
         }
     }
+    // Expected Min: Hour 0 -> avg(0.10, 0.11, 0.12, 0.13) = 0.115 SEK/kWh = 11,50 öre
+    // Expected Max: Hour 23 -> avg(2.40, 2.41, 2.42, 2.43) = 2.415 SEK/kWh = 241,50 öre
+    public static void listWith96Prices (List<ElpriserAPI.Elpris> elpriser96) {
+         //behöver 24 grupper där varje grupp visar 4 priser som medelpris
+        //timme = 0, prisindex 1-4, (P1, P2, P3, P4)
+
+        //i är 0; sålänge i är mindre än storleken på listan; öka i med 4
+            for (int i = 0; i < elpriser96.size(); i += 4) {
+                //I varje loop, stoppa de fyra värderna i en sublist
+                List<ElpriserAPI.Elpris> listaPerTimme = elpriser96.subList(i, i + 4);
+
+                double sum = listaPerTimme.stream().mapToDouble(ElpriserAPI.Elpris::sekPerKWh).sum();
+                double medelPris = sum/4.0;
+
+                int timme = i/4;
+                int timme2 = timme +1;
+
+                String timDel = String.format("%02d-%02d", timme, timme2);
+                //String priserIparantes = listaPerTimme.stream().map(elpris -> numberFormat.format(elpris.sekPerKWh()*100)).collect(Collectors.joining(","));
+                double medelprisToOre = medelPris * 100;
+                String formateratMedelPris = numberFormat.format(medelprisToOre);
+
+                System.out.printf("%s Medelpris: %s öre\n", timDel, formateratMedelPris);
+
+
+            }
+        }
+
+
+
     static void printPriser (List<ElpriserAPI.Elpris> priser) {
         priser.stream().forEach(elpriser -> System.out.printf("""
                 %s-%s %.2f öre\n""",elpriser.timeStart().format(timeFormatter), elpriser.timeEnd().format(timeFormatter), elpriser.sekPerKWh()*100));
@@ -201,17 +233,6 @@ public class Main {
 
 
         return sammansattaPriser;
-    }
-    public static void skrivUtSorterad(List<ElpriserAPI.Elpris> elpriser) {
-        for (ElpriserAPI.Elpris elpris : elpriser){
-
-            String startTid = elpris.timeStart().format(timeFormatter);
-            String slutTid = elpris.timeEnd().format(timeFormatter);
-            String pris = numberFormat.format(elpris.sekPerKWh()*100);
-
-            System.out.printf("%s-%s %s öre\n", startTid, slutTid, pris);
-
-        }
     }
 
     public static void skrivUtPriser(List<ElpriserAPI.Elpris> elprisIdag,List<ElpriserAPI.Elpris> elprisImorgon) {
@@ -248,7 +269,7 @@ public class Main {
             summa  += elpriser.sekPerKWh();
         }
         double medelPrisOfDay = summa/ prisLista.size();
-        System.out.printf("Medelpriser för dagen är: %s öre/KWh \n",  numberFormat.format(medelPrisOfDay*100));
+        System.out.printf("Medelpris: %s öre \n",  numberFormat.format(medelPrisOfDay*100));
     }
 
     public static void priceMinMax (List<ElpriserAPI.Elpris> prisLista) {
