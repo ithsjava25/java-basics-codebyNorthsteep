@@ -7,14 +7,6 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
-
-
-//Att göra idag
-//todo: Skapa en metod för att snygga till min switch
-//todo: skapa en metod för sliding window till -charging 2h,4h,8h
-
-//todo: datumformatering
 
 
 public class Main {
@@ -28,7 +20,6 @@ public class Main {
         String zoneOf = null;
         String dateOf = null;
         String chargingInput = null;
-        boolean isHelped = false;
         boolean isSorted = false;
 
         List<String> validZones = new ArrayList<>();
@@ -38,8 +29,6 @@ public class Main {
         validZones.add("SE4");
 
 
-        //Loopar igenom args och letar efter input från terminalen, case styr vad som händer om ex --zone skrivs in
-        //if ger nya värden till zoneOf, dateOf, chargeOf och isHelped och skickar tillbaka till main-metoden
         if (args.length == 0) { helpMe();
         }
 
@@ -47,35 +36,25 @@ public class Main {
             switch (args[i]) {
                 case "--zone" -> { if (i + 1 < args.length) {
                         zoneOf = args[++i];
-                    } else { helpMe(); return;
-
                     }
                 }
                 case "--date" -> { if (i + 1 < args.length) {
                         dateOf = args[++i];
-
-                    } else { helpMe(); return;
                     }
                 }
                 case "--charging" -> { if (i + 1 < args.length) {
                         chargingInput = args[++i];
-                        } else { helpMe(); return;
                         }
                     }
-
-                case "--sorted" -> {
+                case "--sorted" ->
                     isSorted = true;
-                }
 
-                case "--help" -> {
-                    isHelped = true;
-                    helpMe(); return;
-                }
+                case "--help" -> { helpMe(); return;}
+
             }
 
         }
         LocalDate dagensDatum;
-
 
         if (dateOf != null)
             try {
@@ -102,11 +81,15 @@ public class Main {
         if(priserIdag == null) {
             System.out.println("Kunde inte hitta några priser");
             return;
+        } else {
+            System.out.println("Dagens priser:");
         }
         List<ElpriserAPI.Elpris> priserImorgon = elpriserApi.getPriser(tomorrow, zon);
         if(priserImorgon == null){
             System.out.println("Kunde inte hitta några priser för imorgon");
             return;
+        } else {
+            System.out.println("Morgondagens priser:");
         }
 
         numberFormat.setMaximumFractionDigits(2);
@@ -134,12 +117,11 @@ public class Main {
             List<ElpriserAPI.Elpris> sorteradePriser = isSortedCombined(priserIdag, priserImorgon);
             printPriser(sorteradePriser);
             return;
-        } //else printhelp
-        skrivUtPriser(priserIdag, priserImorgon);
+        }
+        printPriser(kombineradeListor);
         priceMinMax(priserIdag);
         medelPris(priserIdag);
         listWith96Prices(priserIdag);
-
 
     }
 
@@ -148,18 +130,17 @@ public class Main {
         if (priserIdag != null) kombineradeLaddpriser.addAll(priserIdag);
         if (priserImorgon != null) kombineradeLaddpriser.addAll(priserImorgon);
 
-
         return kombineradeLaddpriser;
     }
 
     public static void chargingWindow (List<ElpriserAPI.Elpris> elpriserLadda, int timmar) {
-        //todo: 2,4,8 h, testa i sub-arrays(Sliding windows)
+
         DateTimeFormatter minuteFormatter = DateTimeFormatter.ofPattern("HH:mm");
         NumberFormat newFormat = NumberFormat.getNumberInstance(Locale.of("sv", "SE"));
         newFormat.setMaximumFractionDigits(2);
         newFormat.setMinimumFractionDigits(1);
 
-        if (elpriserLadda == null ||timmar<= 0|| elpriserLadda.isEmpty()|| timmar > elpriserLadda.size()) {
+        if (elpriserLadda == null) {
             System.out.println("Inga eller för få timmar för att beräkna laddningsfönster.");
             return;
         }
@@ -190,15 +171,13 @@ public class Main {
             System.out.printf("Billigaste laddningsfönster för %dh är kl %s-%s\nMedelpris för fönster: %s öre\n Påbörja laddning %s", timmar, startTid, slutTid, formateratPris, startTid);
         }
     }
-    // Expected Min: Hour 0 -> avg(0.10, 0.11, 0.12, 0.13) = 0.115 SEK/kWh = 11,50 öre
-    // Expected Max: Hour 23 -> avg(2.40, 2.41, 2.42, 2.43) = 2.415 SEK/kWh = 241,50 öre
-    public static void listWith96Prices (List<ElpriserAPI.Elpris> elpriser96) {
-         //behöver 24 grupper där varje grupp visar 4 priser som medelpris
-        //timme = 0, prisindex 1-4, (P1, P2, P3, P4)
 
-        //i är 0; sålänge i är mindre än storleken på listan; öka i med 4
+    public static void listWith96Prices (List<ElpriserAPI.Elpris> elpriser96) {
+
+
+        //i är 0; så länge i är mindre än storleken på listan; öka i med 4
             for (int i = 0; i < elpriser96.size(); i += 4) {
-                //I varje loop, stoppa de fyra värderna i en sublist
+                //I varje loop, stoppa de fyra värdena i en sublist
                 List<ElpriserAPI.Elpris> listaPerTimme = elpriser96.subList(i, i + 4);
 
                 double sum = listaPerTimme.stream().mapToDouble(ElpriserAPI.Elpris::sekPerKWh).sum();
@@ -208,21 +187,17 @@ public class Main {
                 int timme2 = timme +1;
 
                 String timDel = String.format("%02d-%02d", timme, timme2);
-                //String priserIparantes = listaPerTimme.stream().map(elpris -> numberFormat.format(elpris.sekPerKWh()*100)).collect(Collectors.joining(","));
                 double medelprisToOre = medelPris * 100;
                 String formateratMedelPris = numberFormat.format(medelprisToOre);
 
                 System.out.printf("%s Medelpris: %s öre\n", timDel, formateratMedelPris);
-
-
             }
         }
 
-
-
     static void printPriser (List<ElpriserAPI.Elpris> priser) {
-        priser.stream().forEach(elpriser -> System.out.printf("""
-                %s-%s %.2f öre\n""",elpriser.timeStart().format(timeFormatter), elpriser.timeEnd().format(timeFormatter), elpriser.sekPerKWh()*100));
+        priser.forEach(elpriser -> System.out.printf("""
+                %s-%s %.2f öre
+                """,elpriser.timeStart().format(timeFormatter), elpriser.timeEnd().format(timeFormatter), elpriser.sekPerKWh()*100));
     }
 
     public static List<ElpriserAPI.Elpris> isSortedCombined (List<ElpriserAPI.Elpris> priserIdag, List<ElpriserAPI.Elpris> priserImorgon) {
@@ -231,39 +206,14 @@ public class Main {
             sammansattaPriser.addAll(priserImorgon);
             sammansattaPriser.sort(Comparator.comparing(ElpriserAPI.Elpris::sekPerKWh).reversed().thenComparing(ElpriserAPI.Elpris::timeStart));
 
-
         return sammansattaPriser;
-    }
-
-    public static void skrivUtPriser(List<ElpriserAPI.Elpris> elprisIdag,List<ElpriserAPI.Elpris> elprisImorgon) {
-
-//todo: Hämta elpriserna i en ArrayList för att skriva ut två dagars priser om morgondagens priser finns //List av listElpriserAPI
-
-        List<ElpriserAPI.Elpris> sammansattaPriser = new ArrayList<>();
-        if (elprisIdag != null) {
-            sammansattaPriser.addAll(elprisIdag);
-            System.out.println("Dagens Priser:");
-            for (ElpriserAPI.Elpris elpriser : elprisIdag) {
-
-                String pris = numberFormat.format(elpriser.sekPerKWh()*100);
-                System.out.printf("%s-%s %s öre\n", elpriser.timeStart().format(timeFormatter), elpriser.timeEnd().format(timeFormatter), pris);
-            }
-        }
-        if (elprisImorgon != null) {
-            sammansattaPriser.addAll(elprisImorgon);
-            System.out.println("Morgondagens priser: ");
-            for (ElpriserAPI.Elpris elpriser : elprisImorgon) {
-
-                String pris = numberFormat.format(elpriser.sekPerKWh() * 100);
-                System.out.printf("%s-%s %s öre\n", elpriser.timeStart().format(timeFormatter), elpriser.timeEnd().format(timeFormatter), pris);
-            }
-        }
     }
 
     private static void medelPris(List<ElpriserAPI.Elpris> prisLista) {
         double summa = 0.0;
         if (prisLista == null) {
             System.out.println("Ingen data tillgänglig för medelpris");
+            return;
         }
         for (ElpriserAPI.Elpris elpriser : prisLista) {
             summa  += elpriser.sekPerKWh();
@@ -314,17 +264,16 @@ public class Main {
       java -cp target/classes com.example.Main [alternativ]
 
     Alternativ:
-      --zone SE1|SE2|SE3|SE4      (obligatoriskt) Välj elpris-zon
+      --zone SE1|SE2|SE3|SE4      (obligatoriskt) Välj giltig elpris-zon
       --date YYYY-MM-DD           (valfritt)      Välj datum, t.ex. 2025-09-21
       --charging 2h|4h|8h         (valfritt)      Hitta billigaste laddningsfönster
       --sorted                    (valfritt)      Sortera priser fallande
       --help                      (valfritt)      Visa denna hjälptext
 
     Exempel:
-      java Main --zone SE3 -- date 2025-09-24 --charging 4h
+      java Main --zone SE3 -- date 2025-09-21 --charging 4h
     """);
     }
-
 }
 
 // java -cp target/classes com.example.Main --zone SE2 --date 2025-09-04 --sorted
