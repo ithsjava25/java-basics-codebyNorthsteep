@@ -28,6 +28,11 @@ public class Main {
         validZones.add("SE3");
         validZones.add("SE4");
 
+        List<String> validHours = new ArrayList<>();
+        validHours.add("2h");
+        validHours.add("4h");
+        validHours.add("8h");
+
 
         if (args.length == 0) { helpMe();
         }
@@ -78,16 +83,15 @@ public class Main {
         }
         zon = ElpriserAPI.Prisklass.valueOf(zoneOf.toUpperCase());
         List<ElpriserAPI.Elpris> priserIdag = elpriserApi.getPriser(dagensDatum, zon);
-        if(priserIdag == null) {
-            System.out.println("Kunde inte hitta några priser");
+        if(priserIdag.isEmpty()) {
+            System.out.println("Inga priser hittade för imorgon");
             return;
         } else {
             System.out.println("Dagens priser:");
         }
         List<ElpriserAPI.Elpris> priserImorgon = elpriserApi.getPriser(tomorrow, zon);
-        if(priserImorgon == null){
-            System.out.println("Kunde inte hitta några priser för imorgon");
-            return;
+        if(priserImorgon.isEmpty()){
+            System.out.println("Inga priser för imorgon hittades");
         } else {
             System.out.println("Morgondagens priser:");
         }
@@ -98,15 +102,20 @@ public class Main {
         List<ElpriserAPI.Elpris> kombineradeListor = combinedLists(priserIdag,priserImorgon);
 
 
+
             int timmar =0;
         if (chargingInput != null) {
-            try {
-                //när användaren skriver 4h h ersätts med ""
-                 timmar = Integer.parseInt(chargingInput.replace("h", ""));
-
-            } catch (NumberFormatException e) {
-                helpMe(); return;
-            }
+           if (!validHours.contains(chargingInput.toLowerCase())) {
+               System.out.println("Ogiltig charging: " + chargingInput);
+               helpMe();
+               return;
+           }
+           try {
+               timmar = Integer.parseInt(chargingInput.toLowerCase().replace("h",""));
+           } catch (NumberFormatException e) {
+               helpMe();
+               return;
+           }
         }
 
         if (timmar > 0) {
@@ -121,7 +130,7 @@ public class Main {
         printPriser(kombineradeListor);
         priceMinMax(priserIdag);
         medelPris(priserIdag);
-        listWith96Prices(priserIdag);
+        calculateHourlyAverages(priserIdag);
 
     }
 
@@ -136,9 +145,7 @@ public class Main {
     public static void chargingWindow (List<ElpriserAPI.Elpris> elpriserLadda, int timmar) {
 
         DateTimeFormatter minuteFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        NumberFormat newFormat = NumberFormat.getNumberInstance(Locale.of("sv", "SE"));
-        newFormat.setMaximumFractionDigits(2);
-        newFormat.setMinimumFractionDigits(1);
+
 
         if (elpriserLadda == null) {
             System.out.println("Inga eller för få timmar för att beräkna laddningsfönster.");
@@ -166,14 +173,13 @@ public class Main {
             String startTid = start.timeStart().format(minuteFormatter);
             String slutTid = slut.timeEnd().format(minuteFormatter);
             double snittPris = (minSumma/timmar) * 100;
-            String formateratPris = newFormat.format(snittPris);
+            String formateratPris = numberFormat.format(snittPris);
 
             System.out.printf("Billigaste laddningsfönster för %dh är kl %s-%s\nMedelpris för fönster: %s öre\n Påbörja laddning %s", timmar, startTid, slutTid, formateratPris, startTid);
         }
     }
-
-    public static void listWith96Prices (List<ElpriserAPI.Elpris> elpriser96) {
-
+    //Processar prislistan som får 96 priser
+    public static void calculateHourlyAverages (List<ElpriserAPI.Elpris> elpriser96) {
 
         //i är 0; så länge i är mindre än storleken på listan; öka i med 4
             for (int i = 0; i < elpriser96.size(); i += 4) {
