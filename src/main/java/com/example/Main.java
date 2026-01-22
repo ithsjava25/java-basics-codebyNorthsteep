@@ -135,7 +135,7 @@ public class Main {
         medelPris(kombineradeListor);
         calculateHourlyAverages(priserIdag);
 
-    }
+     }
 
     public static List<ElpriserAPI.Elpris> combinedLists(List<ElpriserAPI.Elpris> priserIdag, List<ElpriserAPI.Elpris> priserImorgon) {
         List<ElpriserAPI.Elpris> kombineradeLaddpriser = new ArrayList<>();
